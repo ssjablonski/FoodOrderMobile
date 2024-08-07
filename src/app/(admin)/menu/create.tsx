@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, Image } from 'react-native'
+import { View, Text, StyleSheet, TextInput, Image, Alert } from 'react-native'
 import React, { useState } from 'react'
 import Button from '@/src/components/Button'
 import * as Yup from 'yup'
@@ -6,10 +6,13 @@ import { Formik } from 'formik'
 import { defaultPizzaImage } from '@/src/components/ProductListItem'
 import Colors from '@/src/constants/Colors'
 import * as ImagePicker from 'expo-image-picker';
-import { Stack } from 'expo-router'
+import { Stack, useLocalSearchParams } from 'expo-router'
 
 const CreateProductScreen = () => {
     const [image, setImage] = useState<string | null>(null)
+
+    const { id } = useLocalSearchParams()
+    const isUpdating = !!id
 
     const validationSchema = Yup.object().shape({
         name: Yup.string().required().min(3).max(100),
@@ -31,19 +34,44 @@ const CreateProductScreen = () => {
         setImage(result.assets[0].uri);
         }
     };
-    
+
+    const onSubmit = () => {
+        if (isUpdating) {
+            // update product
+            console.log('update product')
+        } else {
+            // create product
+            console.log('create product')
+        }
+    }
+
+    const onDelete = () => {
+        console.log('delete product')
+    }
+
+    const confirmDelete = () => {
+        Alert.alert("Delete Product", "Are you sure you want to delete this product?", [
+            {
+                text: "Cancel",
+            },
+            {
+                text: "Delete",
+                onPress: onDelete,
+                style: "destructive"
+            }
+        ])
+    }
+
 
   return (
     <View style={styles.container}>
-        <Stack.Screen options={{title: "Create Product"}} />
+        <Stack.Screen options={{title: isUpdating ? "Update Product" : "Create Product"}} />
         <Image source={{uri: image || defaultPizzaImage}} style={styles.image} />
         <Text onPress={pickImage} style={styles.textButton}>Select Image</Text>
         <Formik
             initialValues={{ name: '', price: 0 }}
             validationSchema={validationSchema}
-            onSubmit={values => {
-            console.log(values);
-            }}
+            onSubmit={onSubmit}
         >
             {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
             <View >
@@ -69,7 +97,8 @@ const CreateProductScreen = () => {
                 />
                 {touched.price && errors.price && <Text style={styles.error}>{errors.price}</Text>}
 
-                <Button onPress={() => handleSubmit()} text="Create" />
+                <Button onPress={() => handleSubmit()} text={isUpdating ? "Update" : "Create"} />
+                {isUpdating && <Text onPress={confirmDelete} style={styles.textButton}>Delete</Text>}
             </View>
             )}
         </Formik>
