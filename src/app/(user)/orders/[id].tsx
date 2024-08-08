@@ -30,7 +30,6 @@ const OrderDetailScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'lightgray',
     flex: 1,
     padding: 10,
     gap: 10,
