@@ -15,8 +15,8 @@ const CreateProductScreen = () => {
     const isUpdating = !!id
 
     const validationSchema = Yup.object().shape({
-        name: Yup.string().required().min(3).max(100),
-        price: Yup.number().required().min(0.1),
+        name: Yup.string().required("Name is required").min(3, "Name must be at least 3 characters").max(30, "Name must be at most 30 characters"),
+        price: Yup.number().required("Price is required").min(1, "Price must be at least 1")
     });
 
     const pickImage = async () => {
