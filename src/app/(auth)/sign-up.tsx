@@ -5,16 +5,23 @@ import Button from '@/src/components/Button'
 import { Link } from 'expo-router'
 import Colors from '@/src/constants/Colors'
 import * as Yup from 'yup'
+import { supabase } from '@/src/lib/supabase'
+
 
 const SignUp = () => {
+    const [loading, setLoading] = useState(false)
 
     const validationSchema = Yup.object().shape({
         email: Yup.string().email("Invalid email format").required("Email is required"),
         password: Yup.string().required("Password is required").min(6, "Password must be at least 6 characters")
     })
 
-    const onSubmit = () => {
-        console.log('Sign in')
+    async function signUpWithEmail(email: string, password: string) {
+        setLoading(true)
+        const { error } = await supabase.auth.signUp({email, password})
+
+        if (error) alert(error.message)
+        setLoading(false)
     }
 
     return (
@@ -22,7 +29,7 @@ const SignUp = () => {
             <Formik
                 initialValues={{ email: '', password: '' }}
                 validationSchema={validationSchema}
-                onSubmit={onSubmit}
+                onSubmit={(values) => signUpWithEmail(values.email, values.password)}
             >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                 <View>
@@ -46,7 +53,7 @@ const SignUp = () => {
                         secureTextEntry
                     />
                     {touched.password && errors.password && <Text style={styles.error}>{errors.password}</Text>}
-                    <Button text='Create account' onPress={() => console.log('aka')} />
+                    <Button text={loading ? 'Creating account...' : 'Create account'} disabled={loading} onPress={() => handleSubmit()} />
                     <Text style={styles.textButton}>
                         <Link href={'/sign-in'}>Sign in</Link>
                     </Text>

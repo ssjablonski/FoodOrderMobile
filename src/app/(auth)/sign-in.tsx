@@ -5,26 +5,30 @@ import Colors from '@/src/constants/Colors'
 import * as Yup from 'yup'
 import { Formik } from 'formik'
 import { Link } from 'expo-router'
+import { supabase } from '@/src/lib/supabase'
 
 const SignIn = () => {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const [loading, setLoading] = useState(false)
 
     const validationSchema = Yup.object().shape({
         email: Yup.string().email("Invalid email format").required("Email is required"),
         password: Yup.string().required("Password is required").min(6, "Password must be at least 6 characters")
     })
     
-    const onSubmit = () => {
-        console.log('Sign in')
+    async function signUpWithEmail(email: string, password: string) {
+        setLoading(true)
+        const { error } = await supabase.auth.signInWithPassword({email, password})
+
+        if (error) alert(error.message)
+        setLoading(false)
     }
 
     return (
         <View style={styles.container}>
             <Formik
-                initialValues={{ email: email, password: password }}
+                initialValues={{ email: '', password: ''}}
                 validationSchema={validationSchema}
-                onSubmit={onSubmit}
+                onSubmit={(values) => signUpWithEmail(values.email, values.password)}
             >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                 <View>
@@ -48,7 +52,7 @@ const SignIn = () => {
                         secureTextEntry
                     />
                     {touched.password && errors.password && <Text style={styles.error}>{errors.password}</Text>}
-                    <Button text='Sign in' onPress={() => console.log('aka')} />
+                    <Button text={loading ? 'Signing in...' :'Sign in'} disabled={loading} onPress={() => handleSubmit()} />
                     <Text style={styles.textButton}>
                         <Link href={'/sign-up'}>Create an account</Link>
                     </Text>
