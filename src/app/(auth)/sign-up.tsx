@@ -2,7 +2,7 @@ import { View, Text, TextInput, StyleSheet } from 'react-native'
 import React, { useState } from 'react'
 import { Formik } from 'formik'
 import Button from '@/src/components/Button'
-import { Link } from 'expo-router'
+import { Link, Stack } from 'expo-router'
 import Colors from '@/src/constants/Colors'
 import * as Yup from 'yup'
 import { supabase } from '@/src/lib/supabase'
@@ -26,6 +26,7 @@ const SignUp = () => {
 
     return (
         <View style={styles.container}>
+            <Stack.Screen options={{ title: 'Sign up' }} />
             <Formik
                 initialValues={{ email: '', password: '' }}
                 validationSchema={validationSchema}

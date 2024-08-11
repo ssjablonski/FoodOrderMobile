@@ -24,9 +24,8 @@ export default function AuthProvider({children}: PropsWithChildren) {
 
     useEffect(() => {
         const fetchSession = async () => {
-            const { data: {session},} = await supabase.auth.getSession()
-            setSession(session)
-            setLoading(false)
+            const { data: {session},} = await supabase.auth.getSession();
+            setSession(session);
 
             if (session) {
                 // fetch profile
@@ -36,8 +35,10 @@ export default function AuthProvider({children}: PropsWithChildren) {
                     .eq('id', session.user.id)
                     .single();
                 setProfile(data || null);
-                }
-        }
+            };
+
+            setLoading(false)
+        };
         fetchSession()
         supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);

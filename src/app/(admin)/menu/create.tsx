@@ -1,145 +1,208 @@
 import { View, Text, StyleSheet, TextInput, Image, Alert } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Button from '@/src/components/Button'
-import * as Yup from 'yup'
-import { Formik } from 'formik'
 import { defaultPizzaImage } from '@/src/components/ProductListItem'
 import Colors from '@/src/constants/Colors'
 import * as ImagePicker from 'expo-image-picker';
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useDeleteProduct, useInsertProduct, useProduct, useUpdateProduct } from '@/src/api/products'
 
 const CreateProductScreen = () => {
-    const [image, setImage] = useState<string | null>(null)
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [errors, setErrors] = useState('');
+  const [image, setImage] = useState<string | null>(null);
 
-    const { id } = useLocalSearchParams()
-    const isUpdating = !!id
+  const { id: idString } = useLocalSearchParams();
+  const id = parseFloat(
+    typeof idString === 'string' ? idString : idString?.[0]
+  );
+  const isUpdating = !!idString;
 
-    const validationSchema = Yup.object().shape({
-        name: Yup.string().required("Name is required").min(3, "Name must be at least 3 characters").max(30, "Name must be at most 30 characters"),
-        price: Yup.number().required("Price is required").min(1, "Price must be at least 1")
+  const { mutate: insertProduct } = useInsertProduct();
+  const { mutate: updateProduct } = useUpdateProduct();
+  const { data: updatingProduct } = useProduct(id);
+  const { mutate: deleteProduct } = useDeleteProduct();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (updatingProduct) {
+      setName(updatingProduct.name);
+      setPrice(updatingProduct.price.toString());
+      setImage(updatingProduct.image);
+    }
+  }, [updatingProduct]);
+
+  const resetFields = () => {
+    setName('');
+    setPrice('');
+  };
+
+  const validateInput = () => {
+    setErrors('');
+    if (!name) {
+      setErrors('Name is required');
+      return false;
+    }
+    if (!price) {
+      setErrors('Price is required');
+      return false;
+    }
+    if (isNaN(parseFloat(price))) {
+      setErrors('Price is not a number');
+      return false;
+    }
+    return true;
+  };
+
+  const onSubmit = () => {
+    if (isUpdating) {
+      // update
+      onUpdate();
+    } else {
+      onCreate();
+    }
+  };
+
+  const onCreate = () => {
+    if (!validateInput()) {
+      return;
+    }
+
+    // Save in the database
+    insertProduct(
+      { name, price: parseFloat(price), image },
+      {
+        onSuccess: () => {
+          resetFields();
+          router.back();
+        },
+      }
+    );
+  };
+
+  const onUpdate = () => {
+    if (!validateInput()) {
+      return;
+    }
+    updateProduct(
+      { id, name, price: parseFloat(price), image },
+      {
+        onSuccess: () => {
+          resetFields();
+          router.back();
+        },
+      }
+    );
+  };
+
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
     });
 
-    const pickImage = async () => {
-        // No permissions request is necessary for launching the image library
-        let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-        });
-
-        console.log(result);
-
-        if (!result.canceled) {
-        setImage(result.assets[0].uri);
-        }
-    };
-
-    const onSubmit = () => {
-        if (isUpdating) {
-            // update product
-            console.log('update product')
-        } else {
-            // create product
-            console.log('create product')
-        }
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
     }
+  };
+  const onDelete = () => {
+    deleteProduct(id, {
+      onSuccess: () => {
+        resetFields();
+        router.replace('/(admin)');
+      },
+    });
+  };
 
-    const onDelete = () => {
-        console.log('delete product')
-    }
-
-    const confirmDelete = () => {
-        Alert.alert("Delete Product", "Are you sure you want to delete this product?", [
-            {
-                text: "Cancel",
-            },
-            {
-                text: "Delete",
-                onPress: onDelete,
-                style: "destructive"
-            }
-        ])
-    }
-
+  const confirmDelete = () => {
+    Alert.alert('Confirm', 'Are you sure you want to delete this product', [
+      {
+        text: 'Cancel',
+      },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: onDelete,
+      },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
-        <Stack.Screen options={{title: isUpdating ? "Update Product" : "Create Product"}} />
-        <Image source={{uri: image || defaultPizzaImage}} style={styles.image} />
-        <Text onPress={pickImage} style={styles.textButton}>Select Image</Text>
-        <Formik
-            initialValues={{ name: '', price: 0 }}
-            validationSchema={validationSchema}
-            onSubmit={onSubmit}
-        >
-            {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-            <View >
-                <Text style={styles.label}>Name</Text>
+      <Stack.Screen
+        options={{ title: isUpdating ? 'Update Product' : 'Create Product' }}
+      />
 
-                <TextInput
-                placeholder="Name"
-                onChangeText={handleChange('name')}
-                onBlur={handleBlur('name')}
-                value={values.name}
-                style={styles.input}
-                />
-                {touched.name && errors.name && <Text style={styles.error}>{errors.name}</Text>}
+      <Image
+        source={{ uri: image || defaultPizzaImage }}
+        style={styles.image}
+      />
+      <Text onPress={pickImage} style={styles.textButton}>
+        Select Image
+      </Text>
 
-                <Text style={styles.label}>Price ($)</Text>
-                <TextInput
-                placeholder="Price"
-                onChangeText={handleChange('price')}
-                onBlur={handleBlur('price')}
-                value={values.price.toString()}
-                keyboardType='numeric'
-                style={styles.input}
-                />
-                {touched.price && errors.price && <Text style={styles.error}>{errors.price}</Text>}
+      <Text style={styles.label}>Name</Text>
+      <TextInput
+        value={name}
+        onChangeText={setName}
+        placeholder="Name"
+        style={styles.input}
+      />
 
-                <Button onPress={() => handleSubmit()} text={isUpdating ? "Update" : "Create"} />
-                {isUpdating && <Text onPress={confirmDelete} style={styles.textButton}>Delete</Text>}
-            </View>
-            )}
-        </Formik>
+      <Text style={styles.label}>Price ($)</Text>
+      <TextInput
+        value={price}
+        onChangeText={setPrice}
+        placeholder="9.99"
+        style={styles.input}
+        keyboardType="numeric"
+      />
+
+      <Text style={{ color: 'red' }}>{errors}</Text>
+      <Button onPress={onSubmit} text={isUpdating ? 'Update' : 'Create'} />
+      {isUpdating && (
+        <Text onPress={confirmDelete} style={styles.textButton}>
+          Delete
+        </Text>
+      )}
     </View>
-
-    
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 10,        
-    },
-    image: {
-        width: '50%',
-        aspectRatio: 1,
-        alignSelf: 'center',
-    },
-    input: {
-        backgroundColor: 'white',
-        padding: 10,
-        borderRadius: 5,
-        marginTop: 5,
-        marginBottom: 20
-    },
-    label : {
-        color: 'gray',
-        fontSize: 16,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 10,
+  },
+  image: {
+    width: '50%',
+    aspectRatio: 1,
+    alignSelf: 'center',
+  },
+  textButton: {
+    alignSelf: 'center',
+    fontWeight: 'bold',
+    color: Colors.light.tint,
+    marginVertical: 10,
+  },
 
-    },
-    textButton: {
-        alignSelf: 'center',
-        fontWeight: 'bold',
-        color: Colors.light.tint,
-    },
-    error: {
-        color: 'red',
-        fontSize: 16,
-    }
-})
+  input: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  label: {
+    color: 'gray',
+    fontSize: 16,
+  },
+});
 
-export default CreateProductScreen
+export default CreateProductScreen;

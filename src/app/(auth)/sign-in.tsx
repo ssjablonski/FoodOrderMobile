@@ -4,7 +4,7 @@ import Button from '@/src/components/Button'
 import Colors from '@/src/constants/Colors'
 import * as Yup from 'yup'
 import { Formik } from 'formik'
-import { Link } from 'expo-router'
+import { Link, Stack } from 'expo-router'
 import { supabase } from '@/src/lib/supabase'
 
 const SignIn = () => {
@@ -25,6 +25,8 @@ const SignIn = () => {
 
     return (
         <View style={styles.container}>
+            <Stack.Screen options={{ title: 'Sign in' }} />
+            
             <Formik
                 initialValues={{ email: '', password: ''}}
                 validationSchema={validationSchema}

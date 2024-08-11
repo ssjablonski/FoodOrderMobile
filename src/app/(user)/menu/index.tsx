@@ -1,9 +1,21 @@
-import products from '@/assets/data/products';
+import { useProductList } from '@/src/api/products';
 import ProductListItem from '@/src/components/ProductListItem';
-import { View, FlatList } from 'react-native';
+import { supabase } from '@/src/lib/supabase';
+import { useQuery } from '@tanstack/react-query';
+import { View, FlatList, ActivityIndicator, Text } from 'react-native';
 
 
 export default function MenuScreen() {
+  const {data: products, error, isLoading} = useProductList();
+
+  if (isLoading) {
+    return <ActivityIndicator />
+  } 
+
+  if (error) {
+    return <Text>Failed to fetch products</Text>
+  }
+
   return (
     <FlatList
       data={products}
