@@ -1,7 +1,5 @@
 import { ActivityIndicator, FlatList, Text } from 'react-native'
-import React from 'react'
 import OrderListItem from '@/src/components/OrderListItem'
-import orders from '@/assets/data/orders'
 import { useMyOrderList } from '@/src/api/orders'
 
 const OrdersList = () => {

@@ -61,14 +61,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     flex: 1,
     padding: 10,
-    
   },
   image: {
     width: '100%',
-    aspectRatio: 1
+    aspectRatio: 1,
+    borderRadius: 10
   },
   price: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
     marginTop: 'auto'
   },

@@ -29,9 +29,7 @@ const CartProvider = ({ children }: PropsWithChildren) => {
     const {mutate: insertOrder} = useInsertOrder()
     const {mutate: insertOrderItems} = useInsertOrderItems()
 
-
     const router = useRouter()
-
 
     const addItem = (product: Product, size: CartItem['size']) => {
         const existingItem = items.find(item => item.product === product && item.size === size)
@@ -82,7 +80,7 @@ const CartProvider = ({ children }: PropsWithChildren) => {
         insertOrderItems(orderItems, {
             onSuccess: () => {
                 clearCart()
-                router.push(`/(user)/orders/${order.id}`)
+                router.push(`/(user)/orders/`)
             }
         })
     }

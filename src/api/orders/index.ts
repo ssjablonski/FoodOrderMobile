@@ -63,7 +63,7 @@ export const useInsertOrder = () => {
       return newOrder;
     },
     async onSuccess() {
-      await queryClient.invalidateQueries(['orders']);
+      await queryClient.invalidateQueries({ queryKey: ['orders']});
     },
   })
 }
@@ -79,8 +79,8 @@ export const useUpdateOrder = () => {
       return updatedOrder;
     },
     async onSuccess(data) {
-      await queryClient.invalidateQueries(['orders']);
-      await queryClient.invalidateQueries(['orders', id]);
+      await queryClient.invalidateQueries({ queryKey: ['orders']});
+      await queryClient.invalidateQueries({ queryKey: ['orders', data.id]});
 
     },
   })
